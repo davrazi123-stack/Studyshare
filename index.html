@@ -161,71 +161,112 @@
       <button class="btn" onclick="uploadAndUnlock()">Upload & Unlock Access</button>
     </div>
 
-    <div id="download-section" class="hidden">
-      <div class="success-box">
-        <h3>🎉 Document Unlocked!</h3>
-        <p>Thank you for contributing! You now have access to download files.</p>
-      </div>
+   <div id="download-section" class="hidden">
+  <div class="success-box">
+    <h3>🎉 Document Unlocked!</h3>
+    <p>Thank you for contributing! Here are all available study files:</p>
+  </div>
 
-      <a id="download-link" href="#" target="_blank" style="text-decoration: none;">
-        <button class="btn btn-success">Download Sample Notes</button>
-      </a>
+  <div id="document-list" style="margin-top: 15px; text-align: left;">
     </div>
+</div>
 
     <p id="message"></p>
   </div>
 
- <script>
-    // Supabase Configuration
-    const SUPABASE_URL = "https://jskfhnjqzrfvnsnnivtt.supabase.co";
-    // MAKE SURE YOUR ACTUAL ANON KEY IS INSIDE THESE QUOTES:
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impza2ZobmpxenJmdm5zbm5pdnR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3MjE5MjAsImV4cCI6MjEwMTI5NzkyMH0.oKMohbhY9cNvr7Rt7iLgea_hg48y1zzaFTcK0wj53YU"; 
+<script>
+  // Supabase Configuration
+  const SUPABASE_URL = "https://jskfhnjqzrfvnsnnivtt.supabase.co";
+  const SUPABASE_ANON_KEY = "YOUR_ACTUAL_ANON_KEY_HERE"; 
 
-    // Initialize Supabase Client with a distinct variable name
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Display selected file name
-    function updateFileName() {
-      const input = document.getElementById('file-input');
-      const fileNameSpan = document.getElementById('file-name');
-      if (input.files.length > 0) {
-        fileNameSpan.innerText = input.files[0].name;
-      }
+  // Load available documents when the page opens
+  window.onload = fetchDocuments;
+
+  function updateFileName() {
+    const input = document.getElementById('file-input');
+    const fileNameSpan = document.getElementById('file-name');
+    if (input.files.length > 0) {
+      fileNameSpan.innerText = input.files[0].name;
+    }
+  }
+
+  // Fetch all uploaded documents from the database
+  async function fetchDocuments() {
+    const { data: docs, error } = await supabaseClient
+      .from('documents')
+      .select('*')
+      .order('id', { ascending: false });
+
+    const listElement = document.getElementById('document-list');
+    if (!listElement) return;
+
+    if (error || !docs || docs.length === 0) {
+      listElement.innerHTML = "<p style='color:#64748b;'>No study files uploaded yet. Be the first!</p>";
+      return;
     }
 
-    // Handle File Upload Logic
-    async function uploadAndUnlock() {
-      const fileInput = document.getElementById('file-input');
-      const message = document.getElementById('message');
-      const file = fileInput.files[0];
+    listElement.innerHTML = docs.map(doc => `
+      <div style="background:#f8fafc; padding:12px; border-radius:8px; margin-bottom:10px; display:flex; justify-between; align-items:center;">
+        <span style="font-weight:600; color:#334155;">📄 ${doc.title}</span>
+        <a href="${doc.file_url}" target="_blank" style="background:#10b981; color:white; padding:6px 12px; border-radius:6px; text-decoration:none; font-size:14px;">Download</a>
+      </div>
+    `).join('');
+  }
 
-      if (!file) {
-        message.style.color = "#ef4444";
-        message.innerText = "Please select a file to upload first!";
-        return;
-      }
+  // Handle Upload and Insert Record into Database
+  async function uploadAndUnlock() {
+    const fileInput = document.getElementById('file-input');
+    const message = document.getElementById('message');
+    const file = fileInput.files[0];
 
-      message.style.color = "#4f46e5";
-      message.innerText = "⏳ Uploading your document...";
+    if (!file) {
+      message.style.color = "#ef4444";
+      message.innerText = "Please select a file to upload first!";
+      return;
+    }
 
-      const filePath = `uploads/${Date.now()}_${file.name}`;
+    message.style.color = "#4f46e5";
+    message.innerText = "⏳ Uploading your document...";
+
+    const filePath = `uploads/${Date.now()}_${file.name}`;
+    
+    // 1. Upload to Storage
+    const { data: storageData, error: storageError } = await supabaseClient.storage
+      .from('study-files')
+      .upload(filePath, file);
+
+    if (storageError) {
+      message.style.color = "#ef4444";
+      message.innerText = "Upload failed: " + storageError.message;
+      return;
+    }
+
+    // 2. Get Public URL for the file
+    const { data: urlData } = supabaseClient.storage
+      .from('study-files')
+      .getPublicUrl(filePath);
+
+    const publicUrl = urlData.publicUrl;
+
+    // 3. Insert record into Database Table
+    const { error: dbError } = await supabaseClient
+      .from('documents')
+      .insert([{ title: file.name, file_url: publicUrl }]);
+
+    if (dbError) {
+      message.style.color = "#ef4444";
+      message.innerText = "Database save failed: " + dbError.message;
+    } else {
+      message.innerText = "";
       
-      // Using supabaseClient here
-      const { data, error } = await supabaseClient.storage
-        .from('study-files')
-        .upload(filePath, file);
-
-      if (error) {
-        message.style.color = "#ef4444";
-        message.innerText = "Upload failed: " + error.message;
-        console.error("Supabase Error:", error);
-      } else {
-        message.innerText = "";
-        
-        // Hide upload container & show unlocked area
-        document.getElementById('upload-section').classList.add('hidden');
-        document.getElementById('download-section').classList.remove('hidden');
-      }
+      // Unlock the download list!
+      document.getElementById('upload-section').classList.add('hidden');
+      document.getElementById('download-section').classList.remove('hidden');
+      
+      // Refresh the available documents list
+      fetchDocuments();
     }
-  </script>
-</html>
+  }
+</script>
