@@ -1,17 +1,84 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>StudyShare - Swap Study Notes</title>
+  
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <style>
-    body { font-family: sans-serif; text-align: center; padding: 50px; background: #f4f4f9; }
-    h1 { color: #333; }
-    p { color: #666; }
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; background: #f9f9f9; text-align: center; }
+    .card { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    button { background: #007bff; color: white; border: none; padding: 10px 20px; font-size: 16px; border-radius: 5px; cursor: pointer; margin-top: 10px; }
+    button:hover { background: #0056b3; }
+    input[type="file"] { margin: 15px 0; }
+    .hidden { display: none; }
+    #message { margin-top: 15px; font-weight: bold; color: #28a745; }
   </style>
 </head>
 <body>
-  <h1>Welcome to StudyShare 📚</h1>
-  <p>Upload a document to download study materials!</p>
+
+  <div class="card">
+    <h1>StudyShare 📚</h1>
+    <p>Upload a document to unlock downloads!</p>
+    
+    <div id="upload-section">
+      <input type="file" id="file-input" />
+      <br />
+      <button onclick="uploadAndUnlock()">Upload Document</button>
+    </div>
+
+    <div id="download-section" class="hidden">
+      <h3>🎉 Access Granted!</h3>
+      <p>Your file was submitted successfully. You can now download study notes.</p>
+      <a id="download-link" href="#" target="_blank">
+        <button>Download Sample Notes</button>
+      </a>
+    </div>
+
+    <p id="message"></p>
+  </div>
+
+  <script>
+    // Replace these two lines with YOUR actual Supabase details from Step 1
+    const SUPABASE_URL = "const SUPABASE_URL = "https://jskfhnjqzrfvnsnnivtt.supabase.co";";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impza2ZobmpxenJmdm5zbm5pdnR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3MjE5MjAsImV4cCI6MjEwMTI5NzkyMH0.oKMohbhY9cNvr7Rt7iLgea_hg48y1zzaFTcK0wj53YU";
+
+    // Initialize Supabase Client
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function uploadAndUnlock() {
+      const fileInput = document.getElementById('file-input');
+      const message = document.getElementById('message');
+      const file = fileInput.files[0];
+
+      if (!file) {
+        alert("Please select a file to upload first!");
+        return;
+      }
+
+      message.style.color = "#007bff";
+      message.innerText = "Uploading your document...";
+
+      // Upload file to the 'study-files' bucket in Supabase
+      const filePath = `uploads/${Date.now()}_${file.name}`;
+      const { data, error } = await supabase.storage
+        .from('study-files')
+        .upload(filePath, file);
+
+      if (error) {
+        message.style.color = "red";
+        message.innerText = "Upload failed: " + error.message;
+      } else {
+        message.style.color = "#28a745";
+        message.innerText = "Upload successful!";
+        
+        // Show the download area!
+        document.getElementById('upload-section').classList.add('hidden');
+        document.getElementById('download-section').classList.remove('hidden');
+      }
+    }
+  </script>
 </body>
 </html>
