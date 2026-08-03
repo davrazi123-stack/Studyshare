@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NGIRAZI SHARE - Swap Study Notes</title>
+  <title>StudyShare - Swap Study Notes</title>
   
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -145,7 +145,7 @@
 
   <div class="card">
     <div class="icon-header">📚</div>
-    <h1>DAVRAZI HUB</h1>
+    <h1>StudyShare</h1>
     <p class="subtitle">Upload 3 study documents to earn 1 download credit!</p>
     
     <div class="credit-badge">
@@ -169,7 +169,7 @@
     <h3 style="text-align: left; font-size: 16px; color: #FFFFFF; margin-bottom: 12px;">Available Documents:</h3>
     
     <div class="search-container">
-      <input type="text" id="search-bar" placeholder="Search by document title..." onkeyup="fetchDocuments()">
+      <input type="text" id="search-bar" placeholder="Search by document title (e.g. 'maths')..." onkeyup="fetchDocuments()">
     </div>
     
     <div id="document-list"></div>
@@ -195,7 +195,7 @@
 
     window.onload = function() {
       updateCreditDisplay();
-      fetchDocuments();
+      // fetchDocuments() is NOT called here
     };
 
     function updateCreditDisplay() {
@@ -212,7 +212,7 @@
       }
     }
 
-    // New helper: Gets right icon based on extension
+    // Gets right icon based on extension
     function getFileIcon(filename) {
       const ext = filename.split('.').pop().toLowerCase();
       if (ext === 'pdf') return '📕';
@@ -222,7 +222,7 @@
       return '📄';
     }
 
-    // Helper: Gets star HTML based on average rating
+    // Gets star HTML based on average rating
     function getRatingStars(rating) {
       let starsHtml = '';
       const roundedRating = Math.round(rating * 2) / 2; // Round to nearest 0.5
@@ -233,9 +233,8 @@
       return `${starsHtml} (${rating > 0 ? rating.toFixed(1) : 'No'} ratings)`;
     }
 
-    // Helper to submit a rating
+    // Submits rating to supabase table
     async function submitRating(documentId, score) {
-      // Very basic local-only logic to prevent spamming ratings
       if (localStorage.getItem(`rated_${documentId}`)) {
         alert("You have already rated this document.");
         return;
@@ -259,33 +258,38 @@
 
       localStorage.setItem(`rated_${documentId}`, 'true');
       alert("Thank you for your rating!");
+      // Refresh the search after rating to show updated stars
       fetchDocuments();
     }
 
-    // --- Updated with Search and Ratings logic ---
+    // --- REPLACED: Updated with 'Only Show on Search' logic ---
     async function fetchDocuments() {
-      const searchTerm = document.getElementById('search-bar').value;
+      const searchTerm = document.getElementById('search-bar').value.trim(); //
       const listElement = document.getElementById('document-list');
+      
+      // --- NEW LOGIC: Clear list if search is empty ---
+      if (!searchTerm) {
+        listElement.innerHTML = `<p style='color:#A0A0A0; font-size:14px; text-align:center; padding:15px;'>Use the search bar above to find documents. For example, try typing 'maths'.</p>`;
+        return;
+      }
       
       let query = supabaseClient
         .from('documents')
         .select('*');
 
-      // If searching, add filter
-      if (searchTerm) {
-        query = query.ilike('title', `%${searchTerm}%`);
-      }
+      // Add case-insensitive search filter
+      query = query.ilike('title', `%${searchTerm}%`); //
 
       const { data: docs, error } = await query.order('id', { ascending: false });
 
       if (error || !docs || docs.length === 0) {
-        listElement.innerHTML = `<p style='color:#A0A0A0; font-size:14px; text-align:center; padding:15px;'>${searchTerm ? 'No documents match your search.' : 'No study files uploaded yet.'}</p>`;
+        listElement.innerHTML = `<p style='color:#A0A0A0; font-size:14px; text-align:center; padding:15px;'>No documents match your search.</p>`;
         return;
       }
 
+      //
       listElement.innerHTML = docs.map(doc => {
         const fileIcon = getFileIcon(doc.title);
-        // Calculate average rating score, default 0 if no ratings
         const avgRating = doc.rating_count > 0 ? doc.total_rating_score / doc.rating_count : 0;
         
         return `
@@ -339,13 +343,24 @@
         return;
       }
 
+      // --- NEW FILE SIZE VALIDATION ---
+      // Max size: bytes ()
+      const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
+      if (file.size > MAX_FILE_SIZE_BYTES) {
+        message.style.color = "#ef4444";
+        message.innerText = "❌ File too large! Maximum allowed size is.";
+        return;
+      }
+      // ----------------------------------------
+
       message.style.color = "#90CDF4";
       message.innerText = "🔍 Checking file validity...";
 
+      // --- UPDATED Duplicate Check in Database (Case-Insensitive) ---
       const { data: existingFiles, error: searchError } = await supabaseClient
         .from('documents')
         .select('id')
-        .eq('title', file.name);
+        .ilike('title', file.name); // '.ilike' makes the matching case-insensitive
 
       const isDuplicate = existingFiles && existingFiles.length > 0;
 
