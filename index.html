@@ -1,9 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta name="description" content="StudyShare is a free platform where students can swap and download study notes, past papers, and revision guides. Upload 1 file to get 1 download credit!">
-<meta name="keywords" content="study notes, past papers, free study materials, student note sharing, revision guides">
-<meta name="robots" content="index, follow">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>StudyShare - Swap Study Notes</title>
@@ -37,7 +34,6 @@
     h1 { color: #1e293b; font-size: 26px; font-weight: 700; margin-bottom: 8px; }
     p.subtitle { color: #64748b; font-size: 15px; margin-bottom: 20px; }
 
-    /* Credit Badge */
     .credit-badge {
       display: inline-block;
       background: #e0e7ff;
@@ -49,7 +45,6 @@
       margin-bottom: 20px;
     }
 
-    /* Dropzone */
     .file-dropzone {
       border: 2px dashed #cbd5e1;
       border-radius: 12px;
@@ -110,7 +105,7 @@
   <div class="card">
     <div class="icon-header">📚</div>
     <h1>StudyShare</h1>
-    <p class="subtitle">1 Upload = 1 Download Token!</p>
+    <p class="subtitle">Upload study documents to earn download credits!</p>
     
     <div class="credit-badge">
       ⚡ Available Downloads: <span id="credit-count">0</span>
@@ -118,9 +113,9 @@
 
     <div id="upload-section">
       <div class="file-dropzone" onclick="document.getElementById('file-input').click()">
-        <label>📄 Select a document to upload (+1 Download Credit)</label>
+        <label>📄 Select a Study File (.pdf, .docx, .txt, .pptx)</label>
         <span id="file-name">No file chosen</span>
-        <input type="file" id="file-input" onchange="updateFileName()" />
+        <input type="file" id="file-input" accept=".pdf,.docx,.doc,.txt,.pptx" onchange="updateFileName()" />
       </div>
 
       <button class="btn" onclick="uploadAndUnlock()">Upload Document</button>
@@ -131,18 +126,15 @@
     <hr style="margin: 25px 0; border: none; border-top: 1px solid #e2e8f0;" />
 
     <h3 style="text-align: left; font-size: 16px; color: #1e293b; margin-bottom: 12px;">Available Documents:</h3>
-    <div id="document-list">
-      </div>
+    <div id="document-list"></div>
   </div>
 
   <script>
-    // Supabase Setup
     const SUPABASE_URL = "https://jskfhnjqzrfvnsnnivtt.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impza2ZobmpxenJmdm5zbm5pdnR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3MjE5MjAsImV4cCI6MjEwMTI5NzkyMH0.oKMohbhY9cNvr7Rt7iLgea_hg48y1zzaFTcK0wj53YU"; // <-- Keep your actual key here
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impza2ZobmpxenJmdm5zbm5pdnR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3MjE5MjAsImV4cCI6MjEwMTI5NzkyMH0.oKMohbhY9cNvr7Rt7iLgea_hg48y1zzaFTcK0wj53YU"; // <-- Ensure your key is here
 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Initialize credits from local browser storage
     let userCredits = parseInt(localStorage.getItem('studyShareCredits')) || 0;
 
     window.onload = function() {
@@ -163,7 +155,6 @@
       }
     }
 
-    // Fetch documents and attach credit-check logic to download buttons
     async function fetchDocuments() {
       const { data: docs, error } = await supabaseClient
         .from('documents')
@@ -173,7 +164,7 @@
       const listElement = document.getElementById('document-list');
 
       if (error || !docs || docs.length === 0) {
-        listElement.innerHTML = "<p style='color:#64748b; font-size:14px;'>No documents available yet.</p>";
+        listElement.innerHTML = "<p style='color:#64748b; font-size:14px;'>No study files uploaded yet.</p>";
         return;
       }
 
@@ -185,22 +176,18 @@
       `).join('');
     }
 
-    // Handle Download Credit Deduction
     function handleDownload(fileUrl) {
       if (userCredits <= 0) {
-        alert("🔒 You have 0 download credits left! Please upload a study document above to earn 1 download credit.");
+        alert("🔒 You have 0 credits! Upload a unique study document above to earn credits.");
         return;
       }
 
-      // Deduct 1 credit and update display
       userCredits -= 1;
       updateCreditDisplay();
-
-      // Trigger file download
       window.open(fileUrl, '_blank');
     }
 
-    // Handle Upload and Add +1 Credit
+    // Validation & Duplicate Check Engine
     async function uploadAndUnlock() {
       const fileInput = document.getElementById('file-input');
       const message = document.getElementById('message');
@@ -212,13 +199,33 @@
         return;
       }
 
+      // --- CHECK 1: Educational Document Verification ---
+      const allowedExtensions = ['pdf', 'docx', 'doc', 'txt', 'pptx'];
+      const fileExtension = file.name.split('.').pop().toLowerCase();
+
+      if (!allowedExtensions.includes(fileExtension)) {
+        message.style.color = "#ef4444";
+        message.innerText = "❌ Invalid file type! Please upload an educational document (.pdf, .docx, .txt, .pptx).";
+        return;
+      }
+
       message.style.color = "#4f46e5";
+      message.innerText = "🔍 Checking file validity...";
+
+      // --- CHECK 2: Duplicate Check in Database ---
+      const { data: existingFiles, error: searchError } = await supabaseClient
+        .from('documents')
+        .select('id')
+        .eq('title', file.name);
+
+      const isDuplicate = existingFiles && existingFiles.length > 0;
+
       message.innerText = "⏳ Uploading your document...";
 
       const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
       const filePath = `uploads/${Date.now()}_${cleanFileName}`;
       
-      // 1. Storage Upload
+      // Upload file to Supabase Storage
       const { data: storageData, error: storageError } = await supabaseClient.storage
         .from('study-files')
         .upload(filePath, file);
@@ -229,36 +236,34 @@
         return;
       }
 
-      // 2. Get Public Link
+      // Get public URL
       const { data: urlData } = supabaseClient.storage
         .from('study-files')
         .getPublicUrl(filePath);
 
       const publicUrl = urlData.publicUrl;
 
-      // 3. Database Save
-      const { error: dbError } = await supabaseClient
+      // Save document entry in database
+      await supabaseClient
         .from('documents')
         .insert([{ title: file.name, file_url: publicUrl }]);
 
-      if (dbError) {
-        message.style.color = "#ef4444";
-        message.innerText = "Database error: " + dbError.message;
+      // --- CHECK 3: Award Credits or Deny for Duplicates ---
+      if (isDuplicate) {
+        message.style.color = "#d97706"; // Warning orange color
+        message.innerText = "⚠️ Duplicate file detected! File was saved, but 0 credits awarded.";
       } else {
-        message.style.color = "#10b981";
-        message.innerText = "🎉 Upload successful! +1 Download credit earned.";
-        
-        // Add 1 Credit
+        message.style.color = "#10b981"; // Success green color
+        message.innerText = "🎉 Valid study file uploaded! +1 Download credit earned.";
         userCredits += 1;
         updateCreditDisplay();
-
-        // Reset file input and refresh list
-        fileInput.value = "";
-        document.getElementById('file-name').innerText = "No file chosen";
-        fetchDocuments();
       }
+
+      // Reset form & reload document list
+      fileInput.value = "";
+      document.getElementById('file-name').innerText = "No file chosen";
+      fetchDocuments();
     }
   </script>
 </body>
 </html>
-
