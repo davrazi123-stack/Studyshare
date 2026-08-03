@@ -3,16 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>StudyShare - Swap Study Notes</title>
+  <title>DAVRAZI HUB - Swap Study Notes</title>
   
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Inter', sans-serif;
-      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      background-color: #121212;
+      color: #E0E0E0;
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -21,23 +23,23 @@
     }
     
     .card {
-      background: #ffffff;
+      background-color: #1E1E1E;
       width: 100%;
       max-width: 520px;
       padding: 35px;
       border-radius: 16px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
       text-align: center;
     }
 
     .icon-header { font-size: 48px; margin-bottom: 12px; }
-    h1 { color: #1e293b; font-size: 26px; font-weight: 700; margin-bottom: 8px; }
-    p.subtitle { color: #64748b; font-size: 15px; margin-bottom: 20px; }
+    h1 { color: #FFFFFF; font-size: 26px; font-weight: 700; margin-bottom: 8px; }
+    p.subtitle { color: #A0A0A0; font-size: 15px; margin-bottom: 20px; }
 
     .credit-badge {
       display: inline-block;
-      background: #e0e7ff;
-      color: #3730a3;
+      background-color: #2D3748;
+      color: #90CDF4;
       font-weight: 700;
       padding: 8px 16px;
       border-radius: 20px;
@@ -46,22 +48,22 @@
     }
 
     .file-dropzone {
-      border: 2px dashed #cbd5e1;
+      border: 2px dashed #4A5568;
       border-radius: 12px;
       padding: 25px 20px;
       cursor: pointer;
       transition: all 0.2s ease;
-      background: #f8fafc;
+      background-color: #2D3748;
       margin-bottom: 18px;
     }
-    .file-dropzone:hover { border-color: #4f46e5; background: #f1f5f9; }
-    .file-dropzone label { cursor: pointer; display: block; color: #475569; font-weight: 500; }
+    .file-dropzone:hover { border-color: #63B3ED; background-color: #3A4A63; }
+    .file-dropzone label { cursor: pointer; display: block; color: #E0E0E0; font-weight: 500; }
     input[type="file"] { display: none; }
-    #file-name { display: block; margin-top: 8px; font-size: 13px; color: #4f46e5; font-weight: 600; word-break: break-all; }
+    #file-name { display: block; margin-top: 8px; font-size: 13px; color: #90CDF4; font-weight: 600; word-break: break-all; }
 
     .btn {
       width: 100%;
-      background: #4f46e5;
+      background-color: #4F46E5;
       color: white;
       border: none;
       padding: 14px 20px;
@@ -71,13 +73,13 @@
       cursor: pointer;
       transition: background 0.2s ease;
     }
-    .btn:hover { background: #4338ca; }
+    .btn:hover { background-color: #4338CA; }
 
     #message { margin-top: 15px; font-size: 14px; font-weight: 500; }
 
     .doc-item {
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
+      background-color: #2D3748;
+      border: 1px solid #4A5568;
       padding: 12px 16px;
       border-radius: 8px;
       margin-bottom: 10px;
@@ -86,9 +88,9 @@
       align-items: center;
       text-align: left;
     }
-    .doc-title { font-weight: 600; color: #334155; font-size: 14px; word-break: break-all; padding-right: 10px; }
+    .doc-title { font-weight: 600; color: #FFFFFF; font-size: 14px; word-break: break-all; padding-right: 10px; }
     .download-btn {
-      background: #10b981;
+      background-color: #10B981;
       color: white;
       padding: 8px 14px;
       border-radius: 6px;
@@ -97,14 +99,23 @@
       font-weight: 600;
       cursor: pointer;
     }
-    .download-btn:hover { background: #059669; }
+    .download-btn:hover { background-color: #059669; }
+
+    #qrcode {
+      display: flex;
+      justify-content: center;
+      padding: 10px;
+      background-color: #FFFFFF;
+      border-radius: 8px;
+      display: inline-block;
+    }
   </style>
 </head>
 <body>
 
   <div class="card">
     <div class="icon-header">📚</div>
-    <h1>StudyShare</h1>
+    <h1>DAVRAZI HUB</h1>
     <p class="subtitle">Upload study documents to earn download credits!</p>
     
     <div class="credit-badge">
@@ -123,19 +134,30 @@
 
     <p id="message"></p>
 
-    <hr style="margin: 25px 0; border: none; border-top: 1px solid #e2e8f0;" />
+    <hr style="margin: 25px 0; border: none; border-top: 1px solid #4A5568;" />
 
-    <h3 style="text-align: left; font-size: 16px; color: #1e293b; margin-bottom: 12px;">Available Documents:</h3>
+    <h3 style="text-align: left; font-size: 16px; color: #FFFFFF; margin-bottom: 12px;">Available Documents:</h3>
     <div id="document-list"></div>
+
+    <hr style="margin: 25px 0; border: none; border-top: 1px solid #4A5568;" />
+
+    <div style="margin-top: 20px; padding: 15px; background-color: #2D3748; border-radius: 12px; border: 1px solid #4A5568;">
+      <p style="font-size: 13px; color: #A0A0A0; font-weight: 600; margin-bottom: 10px;">📱 Scan to open on mobile:</p>
+      <div id="qrcode"></div>
+    </div>
   </div>
 
   <script>
     const SUPABASE_URL = "https://jskfhnjqzrfvnsnnivtt.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impza2ZobmpxenJmdm5zbm5pdnR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3MjE5MjAsImV4cCI6MjEwMTI5NzkyMH0.oKMohbhY9cNvr7Rt7iLgea_hg48y1zzaFTcK0wj53YU"; // <-- Ensure your key is here
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impza2ZobmpxenJmdm5zbm5pdnR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3MjE5MjAsImV4cCI6MjEwMTI5NzkyMH0.oKMohbhY9cNvr7Rt7iLgea_hg48y1zzaFTcK0wj53YU"; 
 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    let userCredits = parseInt(localStorage.getItem('studyShareCredits')) || 0;
+    // --- UPDATED ECONOMY LOGIC ---
+    const UPLOADS_PER_CREDIT = 3; // The new requirement
+    
+    let userCredits = parseInt(localStorage.getItem('studyShareCredits')) || 0; //
+    let userUploadProgress = parseInt(localStorage.getItem('studyShareProgress')) || 0; //
 
     window.onload = function() {
       updateCreditDisplay();
@@ -145,6 +167,7 @@
     function updateCreditDisplay() {
       document.getElementById('credit-count').innerText = userCredits;
       localStorage.setItem('studyShareCredits', userCredits);
+      localStorage.setItem('studyShareProgress', userUploadProgress); //
     }
 
     function updateFileName() {
@@ -164,7 +187,7 @@
       const listElement = document.getElementById('document-list');
 
       if (error || !docs || docs.length === 0) {
-        listElement.innerHTML = "<p style='color:#64748b; font-size:14px;'>No study files uploaded yet.</p>";
+        listElement.innerHTML = "<p style='color:#A0A0A0; font-size:14px;'>No study files uploaded yet.</p>";
         return;
       }
 
@@ -178,7 +201,7 @@
 
     function handleDownload(fileUrl) {
       if (userCredits <= 0) {
-        alert("🔒 You have 0 credits! Upload a unique study document above to earn credits.");
+        alert("🔒 You have 0 credits! Upload unique study documents above to earn credits.");
         return;
       }
 
@@ -187,7 +210,6 @@
       window.open(fileUrl, '_blank');
     }
 
-    // Validation & Duplicate Check Engine
     async function uploadAndUnlock() {
       const fileInput = document.getElementById('file-input');
       const message = document.getElementById('message');
@@ -199,7 +221,6 @@
         return;
       }
 
-      // --- CHECK 1: Educational Document Verification ---
       const allowedExtensions = ['pdf', 'docx', 'doc', 'txt', 'pptx'];
       const fileExtension = file.name.split('.').pop().toLowerCase();
 
@@ -209,10 +230,9 @@
         return;
       }
 
-      message.style.color = "#4f46e5";
+      message.style.color = "#90CDF4";
       message.innerText = "🔍 Checking file validity...";
 
-      // --- CHECK 2: Duplicate Check in Database ---
       const { data: existingFiles, error: searchError } = await supabaseClient
         .from('documents')
         .select('id')
@@ -225,7 +245,6 @@
       const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
       const filePath = `uploads/${Date.now()}_${cleanFileName}`;
       
-      // Upload file to Supabase Storage
       const { data: storageData, error: storageError } = await supabaseClient.storage
         .from('study-files')
         .upload(filePath, file);
@@ -236,34 +255,52 @@
         return;
       }
 
-      // Get public URL
       const { data: urlData } = supabaseClient.storage
         .from('study-files')
         .getPublicUrl(filePath);
 
       const publicUrl = urlData.publicUrl;
 
-      // Save document entry in database
       await supabaseClient
         .from('documents')
         .insert([{ title: file.name, file_url: publicUrl }]);
 
-      // --- CHECK 3: Award Credits or Deny for Duplicates ---
+      // --- UPDATED: 3-to-1 ECONOMY TRACKING ---
       if (isDuplicate) {
-        message.style.color = "#d97706"; // Warning orange color
-        message.innerText = "⚠️ Duplicate file detected! File was saved, but 0 credits awarded.";
+        message.style.color = "#F6AD55"; 
+        message.innerText = "⚠️ Duplicate file detected! File was saved, but NO credit progress awarded.";
       } else {
-        message.style.color = "#10b981"; // Success green color
-        message.innerText = "🎉 Valid study file uploaded! +1 Download credit earned.";
-        userCredits += 1;
+        userUploadProgress += 1; //
+
+        if (userUploadProgress >= UPLOADS_PER_CREDIT) { //
+          userCredits += 1; //
+          userUploadProgress = 0; // Reset progress
+          
+          message.style.color = "#68D391"; 
+          message.innerText = "🎉 Upload successful! That was your 3rd file! +1 Download credit earned."; //
+        } else {
+          message.style.color = "#90CDF4"; 
+          message.innerText = `📄 Upload successful! (File ${userUploadProgress}/${UPLOADS_PER_CREDIT}). Upload ${UPLOADS_PER_CREDIT - userUploadProgress} more to earn 1 credit.`; //
+        }
+        
         updateCreditDisplay();
       }
 
-      // Reset form & reload document list
       fileInput.value = "";
       document.getElementById('file-name').innerText = "No file chosen";
       fetchDocuments();
     }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      new QRCode(document.getElementById("qrcode"), {
+        text: "https://davrazi123-stack.github.io/Studyshare/",
+        width: 128,
+        height: 128,
+        colorDark : "#000000",
+        colorLight : "#FFFFFF",
+        correctLevel : QRCode.CorrectLevel.H
+      });
+    });
   </script>
 </body>
 </html>
