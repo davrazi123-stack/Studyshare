@@ -8,12 +8,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<link rel="manifest" href="manifest.json">
-<script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('service-worker.js');
-  }
-</script>
+
+  <link rel="manifest" href="manifest.json">
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js');
+    }
+  </script>
+
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -22,6 +24,7 @@
       color: #E0E0E0;
       min-height: 100vh;
       display: flex;
+      flex-direction: column; /* To accommodate the install banner */
       align-items: center;
       justify-content: center;
       padding: 20px;
@@ -171,6 +174,11 @@
 </head>
 <body>
 
+  <div id="install-container" style="display: none; background-color: #1E1E1E; padding: 15px; border-bottom: 1px solid #4A5568; position: fixed; top: 0; width: 100%; z-index: 1000; text-align: center;">
+    <p style="color: #A0A0A0; font-size: 14px; margin-bottom: 8px;">Install the StudyShare app for a faster, easier experience!</p>
+    <button id="install-btn" class="btn" style="width: auto; padding: 8px 16px; font-size: 14px; background-color: #10B981;">Download App</button>
+  </div>
+
   <div class="card">
     
     <div id="auth-container">
@@ -238,16 +246,41 @@
 
   <script>
     const SUPABASE_URL = "https://jskfhnjqzrfvnsnnivtt.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impza2ZobmpxenJmdm5zbm5pdnR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3MjE5MjAsImV4cCI6MjEwMTI5NzkyMH0.oKMohbhY9cNvr7Rt7iLgea_hg48y1zzaFTcK0wj53YU"; 
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impza2ZobmpxenJmdm5zbm5pdnR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3MjE5MjAsImV4cCI6MjEwMTI5NzkyMH0.oKMohbhY9cNvr7Rt7iLgea_hg48y1zzaFTcK0wj53YU"; // <-- Ensure your key is here
 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // --- Part 3: Auth Handler Logic ---
+    // --- PWA Custom Installation Logic ---
+    let deferredPrompt; 
+    const installContainer = document.getElementById('install-container');
+    const installBtn = document.getElementById('install-btn');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      installContainer.style.display = 'block';
+    });
+
+    installBtn.addEventListener('click', async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        deferredPrompt = null;
+        installContainer.style.display = 'none';
+      }
+    });
+
+    window.addEventListener('appinstalled', (e) => {
+      installContainer.style.display = 'none';
+      deferredPrompt = null;
+    });
+    // ------------------------------------
+
+    // --- Auth Handler Logic ---
     const authContainer = document.getElementById('auth-container');
     const mainContent = document.getElementById('main-content');
     const authMessage = document.getElementById('auth-message');
 
-    // On Load: Check if user is already signed in
     window.onload = async function() {
       const { data: { user } } = await supabaseClient.auth.getUser();
       if (user) {
@@ -260,14 +293,13 @@
     function showMainContent() {
       authContainer.style.display = 'none';
       mainContent.style.display = 'block';
-      // Load user economy data and generate QR
       updateCreditDisplay();
     }
 
     function showAuthContainer() {
       mainContent.style.display = 'none';
       authContainer.style.display = 'block';
-      generateQRCode(); // QR can show on auth page
+      generateQRCode(); 
     }
 
     async function handleSignUp() {
@@ -305,19 +337,14 @@
 
     async function handleSignOut() {
       await supabaseClient.auth.signOut();
-      window.location.reload(); // Reload to show auth screen
+      window.location.reload(); 
     }
     // ---------------------------------
 
-    // --- Existing Logic --- 
+    // --- Economy Logic --- 
     const UPLOADS_PER_CREDIT = 3; 
     
-    function getUserId() {
-      // In a real app, you'd use user.id to track credits in Supabase db
-      // We are still using localStorage for credits for now
-      return localStorage.getItem('studyShare_currentUser') || 'anonymous';
-    }
-
+    // We are using localStorage for credits per user for now
     let userCredits = parseInt(localStorage.getItem('studyShareCredits')) || 0; 
     let userUploadProgress = parseInt(localStorage.getItem('studyShareProgress')) || 0; 
 
@@ -385,6 +412,7 @@
       const searchTerm = document.getElementById('search-bar').value.trim(); //
       const listElement = document.getElementById('document-list');
       
+      // If searching is empty, clear list
       if (!searchTerm) {
         listElement.innerHTML = `<p style='color:#A0A0A0; font-size:14px; text-align:center; padding:15px;'>Use the search bar above to find documents. For example, try typing 'maths'.</p>`;
         return;
@@ -394,6 +422,7 @@
         .from('documents')
         .select('*');
 
+      // Search using ilike for case-insensitive match
       query = query.ilike('title', `%${searchTerm}%`); //
 
       const { data: docs, error } = await query.order('id', { ascending: false });
@@ -458,16 +487,20 @@
         return;
       }
 
+      // --- FILE SIZE VALIDATION ---
+      // Max size: bytes ()
       const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
       if (file.size > MAX_FILE_SIZE_BYTES) {
         message.style.color = "#ef4444";
         message.innerText = "❌ File too large! Maximum allowed size is.";
         return;
       }
+      // ----------------------------------------
 
       message.style.color = "#90CDF4";
       message.innerText = "🔍 Checking file validity...";
 
+      // Case-insensitive duplicate check
       const { data: existingFiles, error: searchError } = await supabaseClient
         .from('documents')
         .select('id')
@@ -496,6 +529,7 @@
 
       const publicUrl = urlData.publicUrl;
 
+      // Inserting document details into database table
       await supabaseClient
         .from('documents')
         .insert([{ title: file.name, file_url: publicUrl, total_rating_score: 0, rating_count: 0 }]);
