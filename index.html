@@ -175,12 +175,14 @@
     <p id="message"></p>
   </div>
 
-  <script>
+ <script>
     // Supabase Configuration
     const SUPABASE_URL = "https://jskfhnjqzrfvnsnnivtt.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impza2ZobmpxenJmdm5zbm5pdnR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3MjE5MjAsImV4cCI6MjEwMTI5NzkyMH0.oKMohbhY9cNvr7Rt7iLgea_hg48y1zzaFTcK0wj53YU"; // <-- Make sure your key is here!
+    // MAKE SURE YOUR ACTUAL ANON KEY IS INSIDE THESE QUOTES:
+    const SUPABASE_ANON_KEY = "YOUR_ACTUAL_ANON_KEY_HERE"; 
 
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Initialize Supabase Client with a distinct variable name
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // Display selected file name
     function updateFileName() {
@@ -207,13 +209,16 @@
       message.innerText = "⏳ Uploading your document...";
 
       const filePath = `uploads/${Date.now()}_${file.name}`;
-      const { data, error } = await supabase.storage
+      
+      // Using supabaseClient here
+      const { data, error } = await supabaseClient.storage
         .from('study-files')
         .upload(filePath, file);
 
       if (error) {
         message.style.color = "#ef4444";
         message.innerText = "Upload failed: " + error.message;
+        console.error("Supabase Error:", error);
       } else {
         message.innerText = "";
         
@@ -223,5 +228,4 @@
       }
     }
   </script>
-</body>
 </html>
