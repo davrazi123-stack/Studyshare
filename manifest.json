@@ -1,0 +1,16 @@
+{
+  "name": "StudyShare",
+  "short_name": "StudyShare",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#121212",
+  "theme_color": "#1E1E1E",
+  "description": "Upload educational documents to earn download credits.",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
