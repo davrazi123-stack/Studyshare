@@ -5,35 +5,170 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>StudyShare - Swap Study Notes</title>
   
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-    body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; background: #f9f9f9; text-align: center; }
-    .card { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-    button { background: #007bff; color: white; border: none; padding: 10px 20px; font-size: 16px; border-radius: 5px; cursor: pointer; margin-top: 10px; }
-    button:hover { background: #0056b3; }
-    input[type="file"] { margin: 15px 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .card {
+      background: #ffffff;
+      width: 100%;
+      max-width: 480px;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+      text-align: center;
+    }
+
+    .icon-header {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      color: #1e293b;
+      font-size: 26px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    p.subtitle {
+      color: #64748b;
+      font-size: 15px;
+      margin-bottom: 28px;
+    }
+
+    /* Custom File Input Styling */
+    .file-dropzone {
+      border: 2px dashed #cbd5e1;
+      border-radius: 12px;
+      padding: 30px 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: #f8fafc;
+      margin-bottom: 20px;
+    }
+
+    .file-dropzone:hover {
+      border-color: #4f46e5;
+      background: #f1f5f9;
+    }
+
+    .file-dropzone label {
+      cursor: pointer;
+      display: block;
+      color: #475569;
+      font-weight: 500;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    #file-name {
+      display: block;
+      margin-top: 8px;
+      font-size: 13px;
+      color: #4f46e5;
+      font-weight: 600;
+      word-break: break-all;
+    }
+
+    /* Action Buttons */
+    .btn {
+      width: 100%;
+      background: #4f46e5;
+      color: white;
+      border: none;
+      padding: 14px 20px;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.1s ease;
+    }
+
+    .btn:hover {
+      background: #4338ca;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn-success {
+      background: #10b981;
+    }
+    .btn-success:hover {
+      background: #059669;
+    }
+
+    /* Status Messages */
+    #message {
+      margin-top: 18px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
     .hidden { display: none; }
-    #message { margin-top: 15px; font-weight: bold; color: #28a745; }
+
+    /* Success Card */
+    .success-box {
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+
+    .success-box h3 {
+      color: #065f46;
+      font-size: 18px;
+      margin-bottom: 6px;
+    }
+
+    .success-box p {
+      color: #047857;
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
 
   <div class="card">
-    <h1>StudyShare 📚</h1>
-    <p>Upload a document to unlock downloads!</p>
+    <div class="icon-header">📚</div>
+    <h1>StudyShare</h1>
+    <p class="subtitle">Upload a study document to unlock community files!</p>
     
     <div id="upload-section">
-      <input type="file" id="file-input" />
-      <br />
-      <button onclick="uploadAndUnlock()">Upload Document</button>
+      <div class="file-dropzone" onclick="document.getElementById('file-input').click()">
+        <label>📄 Click to select your file</label>
+        <span id="file-name">No file selected</span>
+        <input type="file" id="file-input" onchange="updateFileName()" />
+      </div>
+
+      <button class="btn" onclick="uploadAndUnlock()">Upload & Unlock Access</button>
     </div>
 
     <div id="download-section" class="hidden">
-      <h3>🎉 Access Granted!</h3>
-      <p>Your file was submitted successfully. You can now download study notes.</p>
-      <a id="download-link" href="#" target="_blank">
-        <button>Download Sample Notes</button>
+      <div class="success-box">
+        <h3>🎉 Document Unlocked!</h3>
+        <p>Thank you for contributing! You now have access to download files.</p>
+      </div>
+
+      <a id="download-link" href="#" target="_blank" style="text-decoration: none;">
+        <button class="btn btn-success">Download Sample Notes</button>
       </a>
     </div>
 
@@ -41,40 +176,48 @@
   </div>
 
   <script>
-    // Replace these two lines with YOUR actual Supabase details from Step 1
-    const SUPABASE_URL = "const SUPABASE_URL = "https://jskfhnjqzrfvnsnnivtt.supabase.co";";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impza2ZobmpxenJmdm5zbm5pdnR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3MjE5MjAsImV4cCI6MjEwMTI5NzkyMH0.oKMohbhY9cNvr7Rt7iLgea_hg48y1zzaFTcK0wj53YU";
+    // Supabase Configuration
+    const SUPABASE_URL = "https://jskfhnjqzrfvnsnnivtt.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impza2ZobmpxenJmdm5zbm5pdnR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3MjE5MjAsImV4cCI6MjEwMTI5NzkyMH0.oKMohbhY9cNvr7Rt7iLgea_hg48y1zzaFTcK0wj53YU"; // <-- Make sure your key is here!
 
-    // Initialize Supabase Client
     const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    // Display selected file name
+    function updateFileName() {
+      const input = document.getElementById('file-input');
+      const fileNameSpan = document.getElementById('file-name');
+      if (input.files.length > 0) {
+        fileNameSpan.innerText = input.files[0].name;
+      }
+    }
+
+    // Handle File Upload Logic
     async function uploadAndUnlock() {
       const fileInput = document.getElementById('file-input');
       const message = document.getElementById('message');
       const file = fileInput.files[0];
 
       if (!file) {
-        alert("Please select a file to upload first!");
+        message.style.color = "#ef4444";
+        message.innerText = "Please select a file to upload first!";
         return;
       }
 
-      message.style.color = "#007bff";
-      message.innerText = "Uploading your document...";
+      message.style.color = "#4f46e5";
+      message.innerText = "⏳ Uploading your document...";
 
-      // Upload file to the 'study-files' bucket in Supabase
       const filePath = `uploads/${Date.now()}_${file.name}`;
       const { data, error } = await supabase.storage
         .from('study-files')
         .upload(filePath, file);
 
       if (error) {
-        message.style.color = "red";
+        message.style.color = "#ef4444";
         message.innerText = "Upload failed: " + error.message;
       } else {
-        message.style.color = "#28a745";
-        message.innerText = "Upload successful!";
+        message.innerText = "";
         
-        // Show the download area!
+        // Hide upload container & show unlocked area
         document.getElementById('upload-section').classList.add('hidden');
         document.getElementById('download-section').classList.remove('hidden');
       }
