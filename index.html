@@ -24,68 +24,33 @@
     .card {
       background: #ffffff;
       width: 100%;
-      max-width: 480px;
-      padding: 40px;
+      max-width: 520px;
+      padding: 35px;
       border-radius: 16px;
       box-shadow: 0 10px 25px rgba(0,0,0,0.08);
       text-align: center;
     }
 
-    .icon-header {
-      font-size: 48px;
-      margin-bottom: 12px;
-    }
+    .icon-header { font-size: 48px; margin-bottom: 12px; }
+    h1 { color: #1e293b; font-size: 26px; font-weight: 700; margin-bottom: 8px; }
+    p.subtitle { color: #64748b; font-size: 15px; margin-bottom: 24px; }
 
-    h1 {
-      color: #1e293b;
-      font-size: 26px;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-
-    p.subtitle {
-      color: #64748b;
-      font-size: 15px;
-      margin-bottom: 28px;
-    }
-
-    /* Custom File Input Styling */
+    /* Dropzone */
     .file-dropzone {
       border: 2px dashed #cbd5e1;
       border-radius: 12px;
-      padding: 30px 20px;
+      padding: 25px 20px;
       cursor: pointer;
       transition: all 0.2s ease;
       background: #f8fafc;
-      margin-bottom: 20px;
+      margin-bottom: 18px;
     }
+    .file-dropzone:hover { border-color: #4f46e5; background: #f1f5f9; }
+    .file-dropzone label { cursor: pointer; display: block; color: #475569; font-weight: 500; }
+    input[type="file"] { display: none; }
+    #file-name { display: block; margin-top: 8px; font-size: 13px; color: #4f46e5; font-weight: 600; word-break: break-all; }
 
-    .file-dropzone:hover {
-      border-color: #4f46e5;
-      background: #f1f5f9;
-    }
-
-    .file-dropzone label {
-      cursor: pointer;
-      display: block;
-      color: #475569;
-      font-weight: 500;
-    }
-
-    input[type="file"] {
-      display: none;
-    }
-
-    #file-name {
-      display: block;
-      margin-top: 8px;
-      font-size: 13px;
-      color: #4f46e5;
-      font-weight: 600;
-      word-break: break-all;
-    }
-
-    /* Action Buttons */
+    /* Buttons */
     .btn {
       width: 100%;
       background: #4f46e5;
@@ -96,52 +61,48 @@
       font-weight: 600;
       border-radius: 10px;
       cursor: pointer;
-      transition: background 0.2s ease, transform 0.1s ease;
+      transition: background 0.2s ease;
     }
+    .btn:hover { background: #4338ca; }
 
-    .btn:hover {
-      background: #4338ca;
-    }
-
-    .btn:active {
-      transform: scale(0.98);
-    }
-
-    .btn-success {
-      background: #10b981;
-    }
-    .btn-success:hover {
-      background: #059669;
-    }
-
-    /* Status Messages */
-    #message {
-      margin-top: 18px;
-      font-size: 14px;
-      font-weight: 500;
-    }
-
+    #message { margin-top: 15px; font-size: 14px; font-weight: 500; }
     .hidden { display: none; }
 
-    /* Success Card */
+    /* Unlocked Documents List */
     .success-box {
       background: #ecfdf5;
       border: 1px solid #a7f3d0;
-      padding: 20px;
-      border-radius: 12px;
+      padding: 15px;
+      border-radius: 10px;
       margin-bottom: 20px;
+      text-align: left;
     }
+    .success-box h3 { color: #065f46; font-size: 16px; margin-bottom: 4px; }
+    .success-box p { color: #047857; font-size: 13px; }
 
-    .success-box h3 {
-      color: #065f46;
-      font-size: 18px;
-      margin-bottom: 6px;
+    .doc-item {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      text-align: left;
     }
-
-    .success-box p {
-      color: #047857;
-      font-size: 14px;
+    .doc-title { font-weight: 600; color: #334155; font-size: 14px; word-break: break-all; padding-right: 10px; }
+    .download-btn {
+      background: #10b981;
+      color: white;
+      padding: 8px 14px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
     }
+    .download-btn:hover { background: #059669; }
   </style>
 </head>
 <body>
@@ -153,120 +114,120 @@
     
     <div id="upload-section">
       <div class="file-dropzone" onclick="document.getElementById('file-input').click()">
-        <label>📄 Click to select your file</label>
-        <span id="file-name">No file selected</span>
+        <label>📄 Click here to select a file</label>
+        <span id="file-name">No file chosen</span>
         <input type="file" id="file-input" onchange="updateFileName()" />
       </div>
 
       <button class="btn" onclick="uploadAndUnlock()">Upload & Unlock Access</button>
     </div>
 
-   <div id="download-section" class="hidden">
-  <div class="success-box">
-    <h3>🎉 Document Unlocked!</h3>
-    <p>Thank you for contributing! Here are all available study files:</p>
-  </div>
+    <div id="download-section" class="hidden">
+      <div class="success-box">
+        <h3>🎉 Access Unlocked!</h3>
+        <p>Thank you for contributing. You can now download study files below:</p>
+      </div>
 
-  <div id="document-list" style="margin-top: 15px; text-align: left;">
+      <div id="document-list">
+        </div>
     </div>
-</div>
 
     <p id="message"></p>
   </div>
 
-<script>
-  // Supabase Configuration
-  const SUPABASE_URL = "https://jskfhnjqzrfvnsnnivtt.supabase.co";
-  const SUPABASE_ANON_KEY = "YOUR_ACTUAL_ANON_KEY_HERE"; 
+  <script>
+    // Supabase Configuration
+    const SUPABASE_URL = "https://jskfhnjqzrfvnsnnivtt.supabase.co";
+    // PASTE YOUR ACTUAL ANON KEY INSIDE THE QUOTES BELOW
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impza2ZobmpxenJmdm5zbm5pdnR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3MjE5MjAsImV4cCI6MjEwMTI5NzkyMH0.oKMohbhY9cNvr7Rt7iLgea_hg48y1zzaFTcK0wj53YU"; 
 
-  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // Load available documents when the page opens
-  window.onload = fetchDocuments;
-
-  function updateFileName() {
-    const input = document.getElementById('file-input');
-    const fileNameSpan = document.getElementById('file-name');
-    if (input.files.length > 0) {
-      fileNameSpan.innerText = input.files[0].name;
-    }
-  }
-
-  // Fetch all uploaded documents from the database
-  async function fetchDocuments() {
-    const { data: docs, error } = await supabaseClient
-      .from('documents')
-      .select('*')
-      .order('id', { ascending: false });
-
-    const listElement = document.getElementById('document-list');
-    if (!listElement) return;
-
-    if (error || !docs || docs.length === 0) {
-      listElement.innerHTML = "<p style='color:#64748b;'>No study files uploaded yet. Be the first!</p>";
-      return;
+    function updateFileName() {
+      const input = document.getElementById('file-input');
+      const fileNameSpan = document.getElementById('file-name');
+      if (input.files.length > 0) {
+        fileNameSpan.innerText = input.files[0].name;
+      }
     }
 
-    listElement.innerHTML = docs.map(doc => `
-      <div style="background:#f8fafc; padding:12px; border-radius:8px; margin-bottom:10px; display:flex; justify-between; align-items:center;">
-        <span style="font-weight:600; color:#334155;">📄 ${doc.title}</span>
-        <a href="${doc.file_url}" target="_blank" style="background:#10b981; color:white; padding:6px 12px; border-radius:6px; text-decoration:none; font-size:14px;">Download</a>
-      </div>
-    `).join('');
-  }
+    // Fetch and display uploaded files from database
+    async function fetchDocuments() {
+      const { data: docs, error } = await supabaseClient
+        .from('documents')
+        .select('*')
+        .order('id', { ascending: false });
 
-  // Handle Upload and Insert Record into Database
-  async function uploadAndUnlock() {
-    const fileInput = document.getElementById('file-input');
-    const message = document.getElementById('message');
-    const file = fileInput.files[0];
+      const listElement = document.getElementById('document-list');
 
-    if (!file) {
-      message.style.color = "#ef4444";
-      message.innerText = "Please select a file to upload first!";
-      return;
+      if (error || !docs || docs.length === 0) {
+        listElement.innerHTML = "<p style='color:#64748b; font-size:14px;'>No documents found yet.</p>";
+        return;
+      }
+
+      listElement.innerHTML = docs.map(doc => `
+        <div class="doc-item">
+          <span class="doc-title">📄 ${doc.title}</span>
+          <a class="download-btn" href="${doc.file_url}" target="_blank" download>Download</a>
+        </div>
+      `).join('');
     }
 
-    message.style.color = "#4f46e5";
-    message.innerText = "⏳ Uploading your document...";
+    // Handle Upload
+    async function uploadAndUnlock() {
+      const fileInput = document.getElementById('file-input');
+      const message = document.getElementById('message');
+      const file = fileInput.files[0];
 
-    const filePath = `uploads/${Date.now()}_${file.name}`;
-    
-    // 1. Upload to Storage
-    const { data: storageData, error: storageError } = await supabaseClient.storage
-      .from('study-files')
-      .upload(filePath, file);
+      if (!file) {
+        message.style.color = "#ef4444";
+        message.innerText = "Please select a file to upload first!";
+        return;
+      }
 
-    if (storageError) {
-      message.style.color = "#ef4444";
-      message.innerText = "Upload failed: " + storageError.message;
-      return;
-    }
+      message.style.color = "#4f46e5";
+      message.innerText = "⏳ Uploading your document...";
 
-    // 2. Get Public URL for the file
-    const { data: urlData } = supabaseClient.storage
-      .from('study-files')
-      .getPublicUrl(filePath);
-
-    const publicUrl = urlData.publicUrl;
-
-    // 3. Insert record into Database Table
-    const { error: dbError } = await supabaseClient
-      .from('documents')
-      .insert([{ title: file.name, file_url: publicUrl }]);
-
-    if (dbError) {
-      message.style.color = "#ef4444";
-      message.innerText = "Database save failed: " + dbError.message;
-    } else {
-      message.innerText = "";
+      const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+      const filePath = `uploads/${Date.now()}_${cleanFileName}`;
       
-      // Unlock the download list!
-      document.getElementById('upload-section').classList.add('hidden');
-      document.getElementById('download-section').classList.remove('hidden');
-      
-      // Refresh the available documents list
-      fetchDocuments();
+      // 1. Upload to Supabase Storage Bucket
+      const { data: storageData, error: storageError } = await supabaseClient.storage
+        .from('study-files')
+        .upload(filePath, file);
+
+      if (storageError) {
+        message.style.color = "#ef4444";
+        message.innerText = "Upload failed: " + storageError.message;
+        return;
+      }
+
+      // 2. Get Public Link for the uploaded file
+      const { data: urlData } = supabaseClient.storage
+        .from('study-files')
+        .getPublicUrl(filePath);
+
+      const publicUrl = urlData.publicUrl;
+
+      // 3. Save File Details to Database
+      const { error: dbError } = await supabaseClient
+        .from('documents')
+        .insert([{ title: file.name, file_url: publicUrl }]);
+
+      if (dbError) {
+        message.style.color = "#ef4444";
+        message.innerText = "Database error: " + dbError.message;
+      } else {
+        message.innerText = "";
+        
+        // Hide upload container & show unlocked list
+        document.getElementById('upload-section').classList.add('hidden');
+        document.getElementById('download-section').classList.remove('hidden');
+        
+        // Load all documents
+        fetchDocuments();
+      }
     }
-  }
-</script>
+  </script>
+</body>
+</html>
