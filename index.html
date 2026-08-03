@@ -6,7 +6,6 @@
   <title>StudyShare - Swap Study Notes</title>
   
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -33,7 +32,19 @@
 
     .icon-header { font-size: 48px; margin-bottom: 12px; }
     h1 { color: #1e293b; font-size: 26px; font-weight: 700; margin-bottom: 8px; }
-    p.subtitle { color: #64748b; font-size: 15px; margin-bottom: 24px; }
+    p.subtitle { color: #64748b; font-size: 15px; margin-bottom: 20px; }
+
+    /* Credit Badge */
+    .credit-badge {
+      display: inline-block;
+      background: #e0e7ff;
+      color: #3730a3;
+      font-weight: 700;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
 
     /* Dropzone */
     .file-dropzone {
@@ -50,7 +61,6 @@
     input[type="file"] { display: none; }
     #file-name { display: block; margin-top: 8px; font-size: 13px; color: #4f46e5; font-weight: 600; word-break: break-all; }
 
-    /* Buttons */
     .btn {
       width: 100%;
       background: #4f46e5;
@@ -66,19 +76,6 @@
     .btn:hover { background: #4338ca; }
 
     #message { margin-top: 15px; font-size: 14px; font-weight: 500; }
-    .hidden { display: none; }
-
-    /* Unlocked Documents List */
-    .success-box {
-      background: #ecfdf5;
-      border: 1px solid #a7f3d0;
-      padding: 15px;
-      border-radius: 10px;
-      margin-bottom: 20px;
-      text-align: left;
-    }
-    .success-box h3 { color: #065f46; font-size: 16px; margin-bottom: 4px; }
-    .success-box p { color: #047857; font-size: 13px; }
 
     .doc-item {
       background: #f8fafc;
@@ -97,10 +94,10 @@
       color: white;
       padding: 8px 14px;
       border-radius: 6px;
-      text-decoration: none;
+      border: none;
       font-size: 13px;
       font-weight: 600;
-      white-space: nowrap;
+      cursor: pointer;
     }
     .download-btn:hover { background: #059669; }
   </style>
@@ -110,38 +107,50 @@
   <div class="card">
     <div class="icon-header">📚</div>
     <h1>StudyShare</h1>
-    <p class="subtitle">Upload a study document to unlock community files!</p>
+    <p class="subtitle">1 Upload = 1 Download Token!</p>
     
+    <div class="credit-badge">
+      ⚡ Available Downloads: <span id="credit-count">0</span>
+    </div>
+
     <div id="upload-section">
       <div class="file-dropzone" onclick="document.getElementById('file-input').click()">
-        <label>📄 Click here to select a file</label>
+        <label>📄 Select a document to upload (+1 Download Credit)</label>
         <span id="file-name">No file chosen</span>
         <input type="file" id="file-input" onchange="updateFileName()" />
       </div>
 
-      <button class="btn" onclick="uploadAndUnlock()">Upload & Unlock Access</button>
-    </div>
-
-    <div id="download-section" class="hidden">
-      <div class="success-box">
-        <h3>🎉 Access Unlocked!</h3>
-        <p>Thank you for contributing. You can now download study files below:</p>
-      </div>
-
-      <div id="document-list">
-        </div>
+      <button class="btn" onclick="uploadAndUnlock()">Upload Document</button>
     </div>
 
     <p id="message"></p>
+
+    <hr style="margin: 25px 0; border: none; border-top: 1px solid #e2e8f0;" />
+
+    <h3 style="text-align: left; font-size: 16px; color: #1e293b; margin-bottom: 12px;">Available Documents:</h3>
+    <div id="document-list">
+      </div>
   </div>
 
   <script>
-    // Supabase Configuration
+    // Supabase Setup
     const SUPABASE_URL = "https://jskfhnjqzrfvnsnnivtt.supabase.co";
-    // PASTE YOUR ACTUAL ANON KEY INSIDE THE QUOTES BELOW
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impza2ZobmpxenJmdm5zbm5pdnR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3MjE5MjAsImV4cCI6MjEwMTI5NzkyMH0.oKMohbhY9cNvr7Rt7iLgea_hg48y1zzaFTcK0wj53YU"; 
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impza2ZobmpxenJmdm5zbm5pdnR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3MjE5MjAsImV4cCI6MjEwMTI5NzkyMH0.oKMohbhY9cNvr7Rt7iLgea_hg48y1zzaFTcK0wj53YU"; // <-- Keep your actual key here
 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Initialize credits from local browser storage
+    let userCredits = parseInt(localStorage.getItem('studyShareCredits')) || 0;
+
+    window.onload = function() {
+      updateCreditDisplay();
+      fetchDocuments();
+    };
+
+    function updateCreditDisplay() {
+      document.getElementById('credit-count').innerText = userCredits;
+      localStorage.setItem('studyShareCredits', userCredits);
+    }
 
     function updateFileName() {
       const input = document.getElementById('file-input');
@@ -151,7 +160,7 @@
       }
     }
 
-    // Fetch and display uploaded files from database
+    // Fetch documents and attach credit-check logic to download buttons
     async function fetchDocuments() {
       const { data: docs, error } = await supabaseClient
         .from('documents')
@@ -161,19 +170,34 @@
       const listElement = document.getElementById('document-list');
 
       if (error || !docs || docs.length === 0) {
-        listElement.innerHTML = "<p style='color:#64748b; font-size:14px;'>No documents found yet.</p>";
+        listElement.innerHTML = "<p style='color:#64748b; font-size:14px;'>No documents available yet.</p>";
         return;
       }
 
       listElement.innerHTML = docs.map(doc => `
         <div class="doc-item">
           <span class="doc-title">📄 ${doc.title}</span>
-          <a class="download-btn" href="${doc.file_url}" target="_blank" download>Download</a>
+          <button class="download-btn" onclick="handleDownload('${doc.file_url}')">Download (-1)</button>
         </div>
       `).join('');
     }
 
-    // Handle Upload
+    // Handle Download Credit Deduction
+    function handleDownload(fileUrl) {
+      if (userCredits <= 0) {
+        alert("🔒 You have 0 download credits left! Please upload a study document above to earn 1 download credit.");
+        return;
+      }
+
+      // Deduct 1 credit and update display
+      userCredits -= 1;
+      updateCreditDisplay();
+
+      // Trigger file download
+      window.open(fileUrl, '_blank');
+    }
+
+    // Handle Upload and Add +1 Credit
     async function uploadAndUnlock() {
       const fileInput = document.getElementById('file-input');
       const message = document.getElementById('message');
@@ -191,7 +215,7 @@
       const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
       const filePath = `uploads/${Date.now()}_${cleanFileName}`;
       
-      // 1. Upload to Supabase Storage Bucket
+      // 1. Storage Upload
       const { data: storageData, error: storageError } = await supabaseClient.storage
         .from('study-files')
         .upload(filePath, file);
@@ -202,14 +226,14 @@
         return;
       }
 
-      // 2. Get Public Link for the uploaded file
+      // 2. Get Public Link
       const { data: urlData } = supabaseClient.storage
         .from('study-files')
         .getPublicUrl(filePath);
 
       const publicUrl = urlData.publicUrl;
 
-      // 3. Save File Details to Database
+      // 3. Database Save
       const { error: dbError } = await supabaseClient
         .from('documents')
         .insert([{ title: file.name, file_url: publicUrl }]);
@@ -218,16 +242,20 @@
         message.style.color = "#ef4444";
         message.innerText = "Database error: " + dbError.message;
       } else {
-        message.innerText = "";
+        message.style.color = "#10b981";
+        message.innerText = "🎉 Upload successful! +1 Download credit earned.";
         
-        // Hide upload container & show unlocked list
-        document.getElementById('upload-section').classList.add('hidden');
-        document.getElementById('download-section').classList.remove('hidden');
-        
-        // Load all documents
+        // Add 1 Credit
+        userCredits += 1;
+        updateCreditDisplay();
+
+        // Reset file input and refresh list
+        fileInput.value = "";
+        document.getElementById('file-name').innerText = "No file chosen";
         fetchDocuments();
       }
     }
   </script>
 </body>
 </html>
+
