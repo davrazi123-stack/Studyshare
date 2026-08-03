@@ -30,7 +30,32 @@
       border-radius: 16px;
       box-shadow: 0 10px 25px rgba(0,0,0,0.3);
       text-align: center;
+      position: relative;
     }
+
+    /* Auth Screens Styles */
+    #auth-container { display: none; }
+    #main-content { display: none; }
+    
+    .auth-title { font-size: 24px; color: #FFFFFF; font-weight: 700; margin-bottom: 25px; }
+    .auth-input-group { text-align: left; margin-bottom: 15px; }
+    .auth-input-group label { display: block; font-size: 13px; color: #A0A0A0; margin-bottom: 5px; }
+    .auth-input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #4A5568; background-color: #2D3748; color: #E0E0E0; }
+    .auth-btn-group { display: flex; gap: 10px; margin-top: 20px; }
+    
+    #logout-btn {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: none;
+      border: none;
+      color: #A0A0A0;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+    }
+    #logout-btn:hover { color: #FFFFFF; }
+    /* -------------------- */
 
     .icon-header { font-size: 48px; margin-bottom: 12px; }
     h1 { color: #FFFFFF; font-size: 26px; font-weight: 700; margin-bottom: 8px; }
@@ -77,7 +102,6 @@
 
     #message { margin-top: 15px; font-size: 14px; font-weight: 500; }
 
-    /* New CSS for Search and Previews */
     .search-container {
       margin-bottom: 20px;
       text-align: left;
@@ -127,7 +151,6 @@
     }
     .download-btn:hover { background-color: #059669; }
 
-    /* Rating stars functionality */
     .star-rating { cursor: pointer; color: #4A5568; }
     .star-rating:hover, .star-rating.active { color: #F6AD55; }
 
@@ -144,59 +167,154 @@
 <body>
 
   <div class="card">
-    <div class="icon-header">📚</div>
-    <h1>StudyShare</h1>
-    <p class="subtitle">Upload 3 study documents to earn 1 download credit!</p>
     
-    <div class="credit-badge">
-      ⚡ Available Downloads: <span id="credit-count">0</span>
+    <div id="auth-container">
+      <div class="icon-header">📚</div>
+      <p class="auth-title">Welcome to StudyShare</p>
+      
+      <div class="auth-input-group">
+        <label>Institutional / Authentic Email</label>
+        <input type="email" id="auth-email" class="auth-input" placeholder="you@university.edu" />
+      </div>
+      
+      <div class="auth-input-group">
+        <label>Password</label>
+        <input type="password" id="auth-password" class="auth-input" placeholder="••••••••" />
+      </div>
+      
+      <p id="auth-message" style="margin-top:10px; font-size:13px;"></p>
+      
+      <div class="auth-btn-group">
+        <button class="btn" style="background-color:#2D3748; flex:1;" onclick="handleSignUp()">Sign Up</button>
+        <button class="btn" style="flex:1;" onclick="handleSignIn()">Sign In</button>
+      </div>
     </div>
-
-    <div id="upload-section">
-      <div class="file-dropzone" onclick="document.getElementById('file-input').click()">
-        <label>📄 Select a Study File (.pdf, .docx, .txt, .pptx)</label>
-        <span id="file-name">No file chosen</span>
-        <input type="file" id="file-input" accept=".pdf,.docx,.doc,.txt,.pptx" onchange="updateFileName()" />
+    <div id="main-content">
+      <button id="logout-btn" onclick="handleSignOut()">Logout</button>
+      
+      <div class="icon-header">📚</div>
+      <h1>StudyShare</h1>
+      <p class="subtitle">Upload 3 study documents to earn 1 download credit!</p>
+      
+      <div class="credit-badge">
+        ⚡ Available Downloads: <span id="credit-count">0</span>
       </div>
 
-      <button class="btn" onclick="uploadAndUnlock()">Upload Document</button>
+      <div id="upload-section">
+        <div class="file-dropzone" onclick="document.getElementById('file-input').click()">
+          <label>📄 Select a Study File (.pdf, .docx, .txt, .pptx)</label>
+          <span id="file-name">No file chosen</span>
+          <input type="file" id="file-input" accept=".pdf,.docx,.doc,.txt,.pptx" onchange="updateFileName()" />
+        </div>
+
+        <button class="btn" onclick="uploadAndUnlock()">Upload Document</button>
+      </div>
+
+      <p id="message"></p>
+
+      <hr style="margin: 25px 0; border: none; border-top: 1px solid #4A5568;" />
+
+      <h3 style="text-align: left; font-size: 16px; color: #FFFFFF; margin-bottom: 12px;">Available Documents:</h3>
+      
+      <div class="search-container">
+        <input type="text" id="search-bar" placeholder="Search by document title (e.g. 'maths')..." onkeyup="fetchDocuments()">
+      </div>
+      
+      <div id="document-list"></div>
+
+      <hr style="margin: 25px 0; border: none; border-top: 1px solid #4A5568;" />
+
+      <div style="margin-top: 20px; padding: 15px; background-color: #2D3748; border-radius: 12px; border: 1px solid #4A5568;">
+        <p style="font-size: 13px; color: #A0A0A0; font-weight: 600; margin-bottom: 10px;">📱 Scan to open on mobile:</p>
+        <div id="qrcode"></div>
+      </div>
     </div>
-
-    <p id="message"></p>
-
-    <hr style="margin: 25px 0; border: none; border-top: 1px solid #4A5568;" />
-
-    <h3 style="text-align: left; font-size: 16px; color: #FFFFFF; margin-bottom: 12px;">Available Documents:</h3>
-    
-    <div class="search-container">
-      <input type="text" id="search-bar" placeholder="Search by document title (e.g. 'maths')..." onkeyup="fetchDocuments()">
     </div>
-    
-    <div id="document-list"></div>
-
-    <hr style="margin: 25px 0; border: none; border-top: 1px solid #4A5568;" />
-
-    <div style="margin-top: 20px; padding: 15px; background-color: #2D3748; border-radius: 12px; border: 1px solid #4A5568;">
-      <p style="font-size: 13px; color: #A0A0A0; font-weight: 600; margin-bottom: 10px;">📱 Scan to open on mobile:</p>
-      <div id="qrcode"></div>
-    </div>
-  </div>
 
   <script>
     const SUPABASE_URL = "https://jskfhnjqzrfvnsnnivtt.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impza2ZobmpxenJmdm5zbm5pdnR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3MjE5MjAsImV4cCI6MjEwMTI5NzkyMH0.oKMohbhY9cNvr7Rt7iLgea_hg48y1zzaFTcK0wj53YU"; // <-- Ensure your key is here
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impza2ZobmpxenJmdm5zbm5pdnR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3MjE5MjAsImV4cCI6MjEwMTI5NzkyMH0.oKMohbhY9cNvr7Rt7iLgea_hg48y1zzaFTcK0wj53YU"; 
 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    // --- Part 3: Auth Handler Logic ---
+    const authContainer = document.getElementById('auth-container');
+    const mainContent = document.getElementById('main-content');
+    const authMessage = document.getElementById('auth-message');
+
+    // On Load: Check if user is already signed in
+    window.onload = async function() {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (user) {
+        showMainContent();
+      } else {
+        showAuthContainer();
+      }
+    };
+
+    function showMainContent() {
+      authContainer.style.display = 'none';
+      mainContent.style.display = 'block';
+      // Load user economy data and generate QR
+      updateCreditDisplay();
+    }
+
+    function showAuthContainer() {
+      mainContent.style.display = 'none';
+      authContainer.style.display = 'block';
+      generateQRCode(); // QR can show on auth page
+    }
+
+    async function handleSignUp() {
+      const email = document.getElementById('auth-email').value;
+      const password = document.getElementById('auth-password').value;
+      authMessage.style.color = '#E0E0E0';
+      authMessage.innerText = 'Creating account...';
+
+      const { data, error } = await supabaseClient.auth.signUp({ email, password });
+
+      if (error) {
+        authMessage.style.color = '#ef4444';
+        authMessage.innerText = `Error: ${error.message}`;
+      } else {
+        authMessage.style.color = '#68D391';
+        authMessage.innerText = 'Success! Please check your email for the confirmation link.';
+      }
+    }
+
+    async function handleSignIn() {
+      const email = document.getElementById('auth-email').value;
+      const password = document.getElementById('auth-password').value;
+      authMessage.style.color = '#E0E0E0';
+      authMessage.innerText = 'Signing in...';
+
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        authMessage.style.color = '#ef4444';
+        authMessage.innerText = `Error: ${error.message}`;
+      } else {
+        showMainContent();
+      }
+    }
+
+    async function handleSignOut() {
+      await supabaseClient.auth.signOut();
+      window.location.reload(); // Reload to show auth screen
+    }
+    // ---------------------------------
+
+    // --- Existing Logic --- 
     const UPLOADS_PER_CREDIT = 3; 
     
+    function getUserId() {
+      // In a real app, you'd use user.id to track credits in Supabase db
+      // We are still using localStorage for credits for now
+      return localStorage.getItem('studyShare_currentUser') || 'anonymous';
+    }
+
     let userCredits = parseInt(localStorage.getItem('studyShareCredits')) || 0; 
     let userUploadProgress = parseInt(localStorage.getItem('studyShareProgress')) || 0; 
-
-    window.onload = function() {
-      updateCreditDisplay();
-      // fetchDocuments() is NOT called here
-    };
 
     function updateCreditDisplay() {
       document.getElementById('credit-count').innerText = userCredits;
@@ -212,7 +330,6 @@
       }
     }
 
-    // Gets right icon based on extension
     function getFileIcon(filename) {
       const ext = filename.split('.').pop().toLowerCase();
       if (ext === 'pdf') return '📕';
@@ -222,18 +339,16 @@
       return '📄';
     }
 
-    // Gets star HTML based on average rating
     function getRatingStars(rating) {
       let starsHtml = '';
-      const roundedRating = Math.round(rating * 2) / 2; // Round to nearest 0.5
+      const roundedRating = Math.round(rating * 2) / 2;
       for (let i = 1; i <= 5; i++) {
-        if (i <= roundedRating) { starsHtml += '★'; } // Full
-        else { starsHtml += '☆'; } // Empty
+        if (i <= roundedRating) { starsHtml += '★'; } 
+        else { starsHtml += '☆'; } 
       }
       return `${starsHtml} (${rating > 0 ? rating.toFixed(1) : 'No'} ratings)`;
     }
 
-    // Submits rating to supabase table
     async function submitRating(documentId, score) {
       if (localStorage.getItem(`rated_${documentId}`)) {
         alert("You have already rated this document.");
@@ -258,16 +373,13 @@
 
       localStorage.setItem(`rated_${documentId}`, 'true');
       alert("Thank you for your rating!");
-      // Refresh the search after rating to show updated stars
       fetchDocuments();
     }
 
-    // --- REPLACED: Updated with 'Only Show on Search' logic ---
     async function fetchDocuments() {
       const searchTerm = document.getElementById('search-bar').value.trim(); //
       const listElement = document.getElementById('document-list');
       
-      // --- NEW LOGIC: Clear list if search is empty ---
       if (!searchTerm) {
         listElement.innerHTML = `<p style='color:#A0A0A0; font-size:14px; text-align:center; padding:15px;'>Use the search bar above to find documents. For example, try typing 'maths'.</p>`;
         return;
@@ -277,7 +389,6 @@
         .from('documents')
         .select('*');
 
-      // Add case-insensitive search filter
       query = query.ilike('title', `%${searchTerm}%`); //
 
       const { data: docs, error } = await query.order('id', { ascending: false });
@@ -287,7 +398,6 @@
         return;
       }
 
-      //
       listElement.innerHTML = docs.map(doc => {
         const fileIcon = getFileIcon(doc.title);
         const avgRating = doc.rating_count > 0 ? doc.total_rating_score / doc.rating_count : 0;
@@ -343,24 +453,20 @@
         return;
       }
 
-      // --- NEW FILE SIZE VALIDATION ---
-      // Max size: bytes ()
       const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
       if (file.size > MAX_FILE_SIZE_BYTES) {
         message.style.color = "#ef4444";
         message.innerText = "❌ File too large! Maximum allowed size is.";
         return;
       }
-      // ----------------------------------------
 
       message.style.color = "#90CDF4";
       message.innerText = "🔍 Checking file validity...";
 
-      // --- UPDATED Duplicate Check in Database (Case-Insensitive) ---
       const { data: existingFiles, error: searchError } = await supabaseClient
         .from('documents')
         .select('id')
-        .ilike('title', file.name); // '.ilike' makes the matching case-insensitive
+        .ilike('title', file.name); // '.ilike'
 
       const isDuplicate = existingFiles && existingFiles.length > 0;
 
@@ -385,7 +491,6 @@
 
       const publicUrl = urlData.publicUrl;
 
-      // Inserting document details into database table
       await supabaseClient
         .from('documents')
         .insert([{ title: file.name, file_url: publicUrl, total_rating_score: 0, rating_count: 0 }]);
@@ -412,11 +517,12 @@
 
       fileInput.value = "";
       document.getElementById('file-name').innerText = "No file chosen";
-      fetchDocuments();
     }
 
-    window.addEventListener('DOMContentLoaded', () => {
-      new QRCode(document.getElementById("qrcode"), {
+    function generateQRCode() {
+      const qrcodeContainer = document.getElementById("qrcode");
+      qrcodeContainer.innerHTML = ''; // Clear previous QR
+      new QRCode(qrcodeContainer, {
         text: "https://davrazi123-stack.github.io/Studyshare/",
         width: 128,
         height: 128,
@@ -424,7 +530,7 @@
         colorLight : "#FFFFFF",
         correctLevel : QRCode.CorrectLevel.H
       });
-    });
+    }
   </script>
 </body>
 </html>
