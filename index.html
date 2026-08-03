@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DAVRAZI HUB - Swap Study Notes</title>
+  <title>StudyShare - Swap Study Notes</title>
   
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -77,18 +77,43 @@
 
     #message { margin-top: 15px; font-size: 14px; font-weight: 500; }
 
+    /* New CSS for Search and Previews */
+    .search-container {
+      margin-bottom: 20px;
+      text-align: left;
+    }
+    #search-bar {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #4A5568;
+      background-color: #2D3748;
+      color: #E0E0E0;
+      font-size: 14px;
+    }
+    #search-bar::placeholder { color: #A0A0A0; }
+
     .doc-item {
       background-color: #2D3748;
       border: 1px solid #4A5568;
-      padding: 12px 16px;
+      padding: 16px;
       border-radius: 8px;
       margin-bottom: 10px;
       display: flex;
-      justify-content: space-between;
+      gap: 15px;
       align-items: center;
       text-align: left;
     }
-    .doc-title { font-weight: 600; color: #FFFFFF; font-size: 14px; word-break: break-all; padding-right: 10px; }
+    .file-icon {
+      font-size: 32px;
+      width: 40px;
+      text-align: center;
+    }
+    .doc-details { flex-grow: 1; }
+    .doc-title { font-weight: 600; color: #FFFFFF; font-size: 14px; word-break: break-all; }
+    .doc-rating { font-size: 12px; color: #F6AD55; margin-top: 4px; }
+    
+    .action-group { text-align: right; }
     .download-btn {
       background-color: #10B981;
       color: white;
@@ -98,8 +123,13 @@
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
+      white-space: nowrap;
     }
     .download-btn:hover { background-color: #059669; }
+
+    /* Rating stars functionality */
+    .star-rating { cursor: pointer; color: #4A5568; }
+    .star-rating:hover, .star-rating.active { color: #F6AD55; }
 
     #qrcode {
       display: flex;
@@ -115,8 +145,8 @@
 
   <div class="card">
     <div class="icon-header">📚</div>
-    <h1>DAVRAZI HUB</h1>
-    <p class="subtitle">Upload study documents to earn download credits!</p>
+    <h1>StudyShare</h1>
+    <p class="subtitle">Upload 3 study documents to earn 1 download credit!</p>
     
     <div class="credit-badge">
       ⚡ Available Downloads: <span id="credit-count">0</span>
@@ -137,6 +167,11 @@
     <hr style="margin: 25px 0; border: none; border-top: 1px solid #4A5568;" />
 
     <h3 style="text-align: left; font-size: 16px; color: #FFFFFF; margin-bottom: 12px;">Available Documents:</h3>
+    
+    <div class="search-container">
+      <input type="text" id="search-bar" placeholder="Search by document title..." onkeyup="fetchDocuments()">
+    </div>
+    
     <div id="document-list"></div>
 
     <hr style="margin: 25px 0; border: none; border-top: 1px solid #4A5568;" />
@@ -149,15 +184,14 @@
 
   <script>
     const SUPABASE_URL = "https://jskfhnjqzrfvnsnnivtt.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impza2ZobmpxenJmdm5zbm5pdnR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3MjE5MjAsImV4cCI6MjEwMTI5NzkyMH0.oKMohbhY9cNvr7Rt7iLgea_hg48y1zzaFTcK0wj53YU"; 
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impza2ZobmpxenJmdm5zbm5pdnR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3MjE5MjAsImV4cCI6MjEwMTI5NzkyMH0.oKMohbhY9cNvr7Rt7iLgea_hg48y1zzaFTcK0wj53YU"; // <-- Ensure your key is here
 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // --- UPDATED ECONOMY LOGIC ---
-    const UPLOADS_PER_CREDIT = 3; // The new requirement
+    const UPLOADS_PER_CREDIT = 3; 
     
-    let userCredits = parseInt(localStorage.getItem('studyShareCredits')) || 0; //
-    let userUploadProgress = parseInt(localStorage.getItem('studyShareProgress')) || 0; //
+    let userCredits = parseInt(localStorage.getItem('studyShareCredits')) || 0; 
+    let userUploadProgress = parseInt(localStorage.getItem('studyShareProgress')) || 0; 
 
     window.onload = function() {
       updateCreditDisplay();
@@ -167,7 +201,7 @@
     function updateCreditDisplay() {
       document.getElementById('credit-count').innerText = userCredits;
       localStorage.setItem('studyShareCredits', userCredits);
-      localStorage.setItem('studyShareProgress', userUploadProgress); //
+      localStorage.setItem('studyShareProgress', userUploadProgress); 
     }
 
     function updateFileName() {
@@ -178,25 +212,100 @@
       }
     }
 
-    async function fetchDocuments() {
-      const { data: docs, error } = await supabaseClient
-        .from('documents')
-        .select('*')
-        .order('id', { ascending: false });
+    // New helper: Gets right icon based on extension
+    function getFileIcon(filename) {
+      const ext = filename.split('.').pop().toLowerCase();
+      if (ext === 'pdf') return '📕';
+      if (['doc', 'docx'].includes(ext)) return '📘';
+      if (ext === 'txt') return '📄';
+      if (ext === 'pptx') return '📙';
+      return '📄';
+    }
 
-      const listElement = document.getElementById('document-list');
+    // Helper: Gets star HTML based on average rating
+    function getRatingStars(rating) {
+      let starsHtml = '';
+      const roundedRating = Math.round(rating * 2) / 2; // Round to nearest 0.5
+      for (let i = 1; i <= 5; i++) {
+        if (i <= roundedRating) { starsHtml += '★'; } // Full
+        else { starsHtml += '☆'; } // Empty
+      }
+      return `${starsHtml} (${rating > 0 ? rating.toFixed(1) : 'No'} ratings)`;
+    }
 
-      if (error || !docs || docs.length === 0) {
-        listElement.innerHTML = "<p style='color:#A0A0A0; font-size:14px;'>No study files uploaded yet.</p>";
+    // Helper to submit a rating
+    async function submitRating(documentId, score) {
+      // Very basic local-only logic to prevent spamming ratings
+      if (localStorage.getItem(`rated_${documentId}`)) {
+        alert("You have already rated this document.");
         return;
       }
 
-      listElement.innerHTML = docs.map(doc => `
-        <div class="doc-item">
-          <span class="doc-title">📄 ${doc.title}</span>
-          <button class="download-btn" onclick="handleDownload('${doc.file_url}')">Download (-1)</button>
-        </div>
-      `).join('');
+      const { data: doc, error: fetchError } = await supabaseClient
+        .from('documents')
+        .select('total_rating_score, rating_count')
+        .eq('id', documentId)
+        .single();
+
+      if (fetchError) return;
+
+      const newScore = (doc.total_rating_score || 0) + score;
+      const newCount = (doc.rating_count || 0) + 1;
+
+      await supabaseClient
+        .from('documents')
+        .update({ total_rating_score: newScore, rating_count: newCount })
+        .eq('id', documentId);
+
+      localStorage.setItem(`rated_${documentId}`, 'true');
+      alert("Thank you for your rating!");
+      fetchDocuments();
+    }
+
+    // --- Updated with Search and Ratings logic ---
+    async function fetchDocuments() {
+      const searchTerm = document.getElementById('search-bar').value;
+      const listElement = document.getElementById('document-list');
+      
+      let query = supabaseClient
+        .from('documents')
+        .select('*');
+
+      // If searching, add filter
+      if (searchTerm) {
+        query = query.ilike('title', `%${searchTerm}%`);
+      }
+
+      const { data: docs, error } = await query.order('id', { ascending: false });
+
+      if (error || !docs || docs.length === 0) {
+        listElement.innerHTML = `<p style='color:#A0A0A0; font-size:14px; text-align:center; padding:15px;'>${searchTerm ? 'No documents match your search.' : 'No study files uploaded yet.'}</p>`;
+        return;
+      }
+
+      listElement.innerHTML = docs.map(doc => {
+        const fileIcon = getFileIcon(doc.title);
+        // Calculate average rating score, default 0 if no ratings
+        const avgRating = doc.rating_count > 0 ? doc.total_rating_score / doc.rating_count : 0;
+        
+        return `
+          <div class="doc-item">
+            <div class="file-icon">${fileIcon}</div>
+            <div class="doc-details">
+              <span class="doc-title">${doc.title}</span>
+              <div class="doc-rating">
+                ${getRatingStars(avgRating)}
+              </div>
+            </div>
+            <div class="action-group">
+              <button class="download-btn" onclick="handleDownload('${doc.file_url}')">Download (-1)</button>
+              <div id="rate-voter-${doc.id}" style="font-size:10px; color:#A0A0A0; margin-top:5px; visibility: ${localStorage.getItem('studyShareCredits') > 0 || localStorage.getItem('studyShareProgress') > 0 ? 'visible' : 'hidden'}">
+                Rate: <span class="star-rating" onclick="submitRating(${doc.id}, 5)">★</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
     }
 
     function handleDownload(fileUrl) {
@@ -261,26 +370,26 @@
 
       const publicUrl = urlData.publicUrl;
 
+      // Inserting document details into database table
       await supabaseClient
         .from('documents')
-        .insert([{ title: file.name, file_url: publicUrl }]);
+        .insert([{ title: file.name, file_url: publicUrl, total_rating_score: 0, rating_count: 0 }]);
 
-      // --- UPDATED: 3-to-1 ECONOMY TRACKING ---
       if (isDuplicate) {
         message.style.color = "#F6AD55"; 
         message.innerText = "⚠️ Duplicate file detected! File was saved, but NO credit progress awarded.";
       } else {
-        userUploadProgress += 1; //
+        userUploadProgress += 1; 
 
-        if (userUploadProgress >= UPLOADS_PER_CREDIT) { //
-          userCredits += 1; //
-          userUploadProgress = 0; // Reset progress
+        if (userUploadProgress >= UPLOADS_PER_CREDIT) { 
+          userCredits += 1; 
+          userUploadProgress = 0; 
           
           message.style.color = "#68D391"; 
-          message.innerText = "🎉 Upload successful! That was your 3rd file! +1 Download credit earned."; //
+          message.innerText = "🎉 Upload successful! That was your 3rd file! +1 Download credit earned."; 
         } else {
           message.style.color = "#90CDF4"; 
-          message.innerText = `📄 Upload successful! (File ${userUploadProgress}/${UPLOADS_PER_CREDIT}). Upload ${UPLOADS_PER_CREDIT - userUploadProgress} more to earn 1 credit.`; //
+          message.innerText = `📄 Upload successful! (File ${userUploadProgress}/${UPLOADS_PER_CREDIT}). Upload ${UPLOADS_PER_CREDIT - userUploadProgress} more to earn 1 credit.`; 
         }
         
         updateCreditDisplay();
